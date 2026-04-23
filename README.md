@@ -30,9 +30,13 @@ This is an intelligent agentic system that allows users to query MySQL databases
 SQL-ai/
 ├── .gitignore
 ├── backend/
+│   ├── api    
+│   │    └── query_routes.py                
+│   ├── services
+│   |   ├── langchain_agent.py   # The llm and sql chain code
+│   │   └── security.py          # Forbidden command check 
 │   ├── main.py                   # FastAPI app & API routes
-│   ├── agent.py                  # LangChain SQL agent
-│   ├── security.py               # SQL keyword scanner
+│   ├── requirements.txt
 │   ├── database.py               # SQLAlchemy engine
 │   └── .env                      # Environment variables (never committed)
 └── frontend/
@@ -75,7 +79,7 @@ cd backend
 ### 2. Install dependencies
 
 ```bash
-pip install fastapi uvicorn langchain langchain-openai langchain-community sqlalchemy pymysql cryptography python-dotenv
+pip install -r requirements.txt
 ```
 
 ### 3. Configure environment variables
