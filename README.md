@@ -1,6 +1,6 @@
-# ⚓ SQl AI: Secure Text-to-SQL Business Intelligence
+# ⚓ SQL AI: Secure Text-to-SQL Business Intelligence
 
-This is an intelligent agentic system that allows users to query MySQL databases using natural language. Built with a focus on security, Vela acts as a bridge between non-technical users and complex data structures, ensuring that all queries are analyzed for safety before execution.
+This is an intelligent agentic system that allows users to query MySQL databases using natural language. Built with a focus on security,acts as a bridge between non-technical users and complex data structures, ensuring that all queries are analyzed for safety before execution.
 
 ---
 
@@ -17,7 +17,7 @@ This is an intelligent agentic system that allows users to query MySQL databases
 
 | Layer | Technology |
 | :--- | :--- |
-| **Frontend** | Next.js 15, Tailwind CSS, React Markdown |
+| **Frontend** | Next.js 16, React 19, Tailwind CSS v4, TypeScript |
 | **Backend** | FastAPI, Python 3.11 |
 | **AI Orchestration** | LangChain, OpenAI GPT-4o |
 | **Database** | MySQL, SQLAlchemy |
@@ -28,23 +28,28 @@ This is an intelligent agentic system that allows users to query MySQL databases
 
 ```
 SQL-ai/
+├── .gitignore
 ├── backend/
-│   ├── main.py          # FastAPI app & API routes
-│   ├── agent.py         # LangChain SQL agent
-│   ├── security.py      # SQL keyword scanner
-│   ├── database.py      # SQLAlchemy engine
-│   └── .env             # Environment variables
+│   ├── main.py                   # FastAPI app & API routes
+│   ├── agent.py                  # LangChain SQL agent
+│   ├── security.py               # SQL keyword scanner
+│   ├── database.py               # SQLAlchemy engine
+│   └── .env                      # Environment variables (never committed)
 └── frontend/
     ├── app/
-    │   ├── layout.tsx   # Root layout
-    │   ├── page.tsx     # Main chat page
-    │   └── globals.css  # Global styles
+    │   ├── (dashboard)/
+    │   │   └── page.tsx          # Main chat page — serves route "/"
+    │   ├── layout.tsx            # Root layout (wraps all pages)
+    │   └── globals.css           # Global styles (Tailwind v4)
     ├── components/
-    │   ├── ChatWindow.tsx    # Message list + scroll
-    │   ├── MessageBubble.tsx # Individual message UI
-    │   └── InputBar.tsx      # Text input + send button
-    └── lib/
-        └── api.ts       # Fetch wrapper for backend
+    │   └── dashboard/
+    │       └── chatAgent.tsx     # Chat UI — input, messages, API calls
+    ├── public/                   # Static assets
+    ├── next.config.ts            # Next.js config
+    ├── postcss.config.mjs        # PostCSS + Tailwind v4
+    ├── eslint.config.mjs         # ESLint config
+    ├── tsconfig.json             # TypeScript config
+    └── package.json              # Dependencies
 ```
 
 ---
@@ -82,7 +87,7 @@ OPENAI_API_KEY=sk-...
 
 DB_HOST=localhost
 DB_PORT=3306
-DB_USER=Sql_readonly
+DB_USER=ai_readonly
 DB_PASSWORD=your_password
 DB_NAME=your_database
 ```
@@ -90,8 +95,8 @@ DB_NAME=your_database
 ### 4. Create a MySQL read-only user
 
 ```sql
-CREATE USER 'SQL_readonly'@'localhost' IDENTIFIED BY 'your_password';
-GRANT SELECT ON your_database.* TO 'vela_readonly'@'localhost';
+CREATE USER 'sql_readonly'@'localhost' IDENTIFIED BY 'your_password';
+GRANT SELECT ON your_database.* TO 'sql_readonly'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
@@ -111,10 +116,10 @@ Backend runs at `http://localhost:8000`
 Builds the SQLAlchemy engine from environment variables. Includes connection pooling (`pool_pre_ping`, `pool_recycle`) and a `validate_connection()` helper that pings the DB on startup.
 
 #### `security.py`
-Defines a `scan_sql()` function that uses regex to detect blocked SQL keywords before any query is executed. Keywords include `DROP`, `DELETE`, `UPDATE`, `INSERT`, `TRUNCATE`, `ALTER`, `CREATE`, `GRANT`, `REVOKE`, `EXEC`, and more. Raises `UnsafeSQLError` on a match.
+Defines a `scan_sql()` function that uses regex to detect blocked SQL keywords before any query is executed. Keywords include `DROP`, `DELETE`, `UPDATE`, `INSERT`, `TRUNCATE`, `ALTER`, `CREATE`, `GRANT`, `REVOKE`, `EXEC` and more. Raises `UnsafeSQLError` on a match.
 
 #### `agent.py`
-Builds the LangChain SQL agent using `ChatOpenAI` (GPT-4o) and `SQLDatabaseToolkit`. The default query runner is replaced with a **secure custom tool** that calls `scan_sql()` before hitting the database. Exposes a single `run_query(question)` function for the API layer.
+Builds the LangChain SQL agent using `ChatOpenAI` (GPT-4o) and `SQLDatabaseToolkit`. The default query runner is replaced with a secure custom tool that calls `scan_sql()` before hitting the database. Exposes a single `run_query(question)` function for the API layer.
 
 #### `main.py`
 FastAPI application with two routes:
@@ -154,29 +159,46 @@ Frontend runs at `http://localhost:3000`
 
 ### Frontend File Explanations
 
-#### `app/page.tsx`
-The root page component. Manages the `messages` state array and `loading` flag. Calls `sendQuestion()` from `lib/api.ts` on form submit, then appends both the user message and assistant response to state.
+#### `package.json`
+Key dependencies:
+
+| Package | Version | Purpose |
+| :--- | :--- | :--- |
+| `next` | 16.2.4 | React framework |
+| `react` | 19.2.4 | UI library |
+| `react-markdown` | ^10.1.0 | Renders AI responses as Markdown |
+| `tailwindcss` | ^4 | Utility-first CSS |
+| `typescript` | ^5 | Type safety |
+
+#### `next.config.ts`
+Next.js configuration file. Currently using default settings — extend this to add environment variables, image domains, or custom webpack config.
+
+#### `tsconfig.json`
+TypeScript config with strict mode enabled. Uses `@/*` path alias mapped to the project root so you can import like `import X from "@/components/X"` from anywhere.
+
+#### `postcss.config.mjs`
+Configures PostCSS with `@tailwindcss/postcss` plugin for Tailwind v4 — which no longer requires a separate `tailwind.config.ts` file.
+
+#### `eslint.config.mjs`
+ESLint flat config using `eslint-config-next` for Next.js-specific linting rules.
 
 #### `app/layout.tsx`
-Sets the HTML `<head>` metadata, loads the Inter and JetBrains Mono fonts from Google Fonts, and wraps all pages in a shared layout shell.
+Root layout that wraps every page in the app. Sets the HTML metadata, loads fonts, and applies base className to the `<body>`. Anything placed here (navbar, footer) appears on every route.
 
-#### `lib/api.ts`
-A typed fetch wrapper. `sendQuestion(question)` posts to `POST /query` and returns the answer string. `checkHealth()` hits `GET /health`. The base URL is read from `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000`).
+#### `app/globals.css`
+Global stylesheet using Tailwind v4 `@import "tailwindcss"` syntax. Add custom CSS variables or base styles here.
 
-#### `components/ChatWindow.tsx`
-Renders the scrollable list of messages. Auto-scrolls to the latest message on every update using a `bottomRef`. Shows an animated three-dot typing indicator while `loading` is true. Displays a welcome screen when the conversation is empty.
+#### `app/(dashboard)/page.tsx`
+The main page served at `http://localhost:3000/`. This is a **Next.js Server Component** — it handles the initial render on the server. The `(dashboard)` folder is a **route group**, meaning the folder name is ignored in the URL but keeps the project organised. This page renders the `ChatAgent` component.
 
-#### `components/MessageBubble.tsx`
-Renders a single message. User messages appear as plain text in a blue bubble (right-aligned). Assistant messages are rendered with `react-markdown` + `remark-gfm` (left-aligned white bubble), supporting **tables**, **code blocks**, and all standard Markdown.
-
-#### `components/InputBar.tsx`
-Auto-resizing `<textarea>` that submits on **Enter** (Shift+Enter for newline). Calls `onSubmit()` with the trimmed question and resets itself after sending. The send button is disabled while a response is loading or the input is empty.
+#### `components/dashboard/chatAgent.tsx`
+The core client-side chat component. Handles all user interaction including message state, loading state, sending questions to the FastAPI backend, and rendering the conversation. Uses `react-markdown` to display AI responses with full Markdown support including tables and code blocks.
 
 ---
 
 ## 🛡️ Security Design
 
-Vela implements a **Defence-in-Depth** strategy with three independent layers:
+SQL AI implements a **Defence-in-Depth** strategy with three independent layers:
 
 ```
 User Question
@@ -207,10 +229,40 @@ User Question
 
 1. **Read-Only DB User** — the agent connects with a user that only has `SELECT` privileges.
 2. **SQL Scanner** — a pre-execution middleware layer intercepts the LLM output and rejects any destructive keywords.
-3. **Contextual Rejection** — if a blocked query is attempted, Vela returns a human-readable explanation instead of an error trace.
+3. **Contextual Rejection** — if a blocked query is attempted, SQL AI returns a human-readable explanation instead of an error trace.
 
+---
 
+## 📡 API Reference
+
+### `POST /query`
+
+**Request**
+```json
+{
+  "question": "Who are our top 5 customers by revenue?"
+}
+```
+
+**Response**
+```json
+{
+  "answer": "The top 5 customers by total revenue are: ..."
+}
+```
+
+### `GET /health`
+
+**Response**
+```json
+{
+  "status": "ok",
+  "database": "connected"
+}
+```
+
+---
 
 ## 📝 Author
 
-Developed by **Jeshan Chhabra** — Software Engineer & AI Student.
+Developed by **Your Name** — Software Engineer & AI Student.
