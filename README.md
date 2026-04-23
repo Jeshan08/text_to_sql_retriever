@@ -257,4 +257,4 @@ User Question
 
 ## 📝 Author
 
-Developed by **Your Name** — Software Engineer & AI Student.
+Developed by **Jeshan Chhabra** — Software Engineer & AI Student.
