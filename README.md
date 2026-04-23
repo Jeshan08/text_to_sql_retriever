@@ -251,15 +251,7 @@ User Question
 }
 ```
 
-### `GET /health`
 
-**Response**
-```json
-{
-  "status": "ok",
-  "database": "connected"
-}
-```
 
 ---
 
