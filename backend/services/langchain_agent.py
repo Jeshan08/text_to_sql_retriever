@@ -28,7 +28,7 @@ def run_sql_agent(question: str) -> str:
     #Strickt checking and only allowing if the query is for select 
 
     if not is_sql_safe(clean_sql):
-      return f"Modyfying is not allowed."
+      return f"Modifying  is not allowed."
 
 
     print(f"Sql generated is {clean_sql}")

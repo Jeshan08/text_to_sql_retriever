@@ -1,4 +1,4 @@
-# ⚓ SQL AI: Secure Text-to-SQL Business Intelligence
+# ⚓ TALK2DB AI: Secure Text-to-SQL Business Intelligence
 
 This is an intelligent agentic system that allows users to query MySQL databases using natural language. Built with a focus on security,acts as a bridge between non-technical users and complex data structures, ensuring that all queries are analyzed for safety before execution.
 
